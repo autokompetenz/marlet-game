@@ -12,8 +12,9 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE "User" (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username TEXT NOT NULL UNIQUE,
-  phone TEXT NOT NULL UNIQUE,
-  password TEXT NOT NULL,
+  phone TEXT,
+  password TEXT,
+  "googleId" TEXT UNIQUE,
   role TEXT NOT NULL DEFAULT 'USER',
   balance DOUBLE PRECISION NOT NULL DEFAULT 0,
   "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -62,6 +63,7 @@ CREATE INDEX idx_bet_userId ON "Bet"("userId");
 CREATE INDEX idx_bet_gameId ON "Bet"("gameId");
 CREATE INDEX idx_bet_status ON "Bet"(status);
 CREATE INDEX idx_user_role ON "User"(role);
+CREATE INDEX idx_user_googleId ON "User"("googleId");
 
 -- ============================================================
 -- SEED: JEUX
@@ -76,6 +78,8 @@ ON CONFLICT (name) DO NOTHING;
 
 -- ============================================================
 -- SEED: UTILISATEURS
+-- admin / admin123 (rôle ADMIN | solde 100000 FCFA)
+-- demo / demo123 (rôle USER | solde 5000 FCFA)
 -- ============================================================
 
 INSERT INTO "User" (username, phone, password, role, balance) VALUES

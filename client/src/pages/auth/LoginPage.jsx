@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../store';
 import { useNavigate, Link } from 'react-router-dom';
+import GoogleLogin from '../../components/GoogleLogin';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -25,6 +26,17 @@ export default function Login() {
       <div className="auth-card card">
         <h1>Bienvenue</h1>
         <p>Connectez-vous pour jouer</p>
+
+        <GoogleLogin />
+
+        {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '12px 0' }}>
+            <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #ffffff20' }} />
+            <span style={{ color: 'var(--text2)', fontSize: '0.85rem' }}>ou</span>
+            <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #ffffff20' }} />
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Nom d'utilisateur</label>
