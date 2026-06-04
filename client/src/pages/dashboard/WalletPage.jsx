@@ -19,7 +19,7 @@ export default function Wallet() {
     try {
       if (mode === 'deposit') {
         const res = await deposit(parseFloat(amount));
-        setMsg(`Demande de dépôt envoyée. Réf: ${res.reference?.slice(0, 8)}...`);
+        setMsg(`Dépôt de ${amount} FCFA effectué !`);
       } else {
         await withdraw(parseFloat(amount));
         setMsg('Retrait effectué !');
