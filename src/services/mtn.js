@@ -5,6 +5,7 @@ const CONSUMER_SECRET = process.env.MTN_CONSUMER_SECRET;
 const SUB_KEY = process.env.MTN_SUBSCRIPTION_KEY;
 const ENV = process.env.MTN_ENV || 'sandbox';
 const CALLBACK_HOST = process.env.MTN_CALLBACK_HOST || 'https://marlet-game.vercel.app';
+const TIMEOUT = 10000;
 
 function baseURL() {
   if (ENV === 'production') return 'https://proxy.momoapi.mtn.com';
@@ -16,6 +17,7 @@ async function getToken() {
   // Consumer Key = API User (UUID), Consumer Secret = API Key
   const auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64');
   const { data } = await axios.post(`${baseURL()}/collection/token/`, {}, {
+    timeout: TIMEOUT,
     headers: {
       'Authorization': `Basic ${auth}`,
       'Ocp-Apim-Subscription-Key': SUB_KEY || CONSUMER_KEY,
@@ -37,6 +39,7 @@ export async function requestPayment(phone, amount, reference) {
       payeeNote: 'Merci pour votre dépôt',
     },
     {
+      timeout: TIMEOUT,
       headers: {
         'Authorization': `Bearer ${token}`,
         'X-Reference-Id': reference,
@@ -55,6 +58,7 @@ export async function checkPaymentStatus(reference) {
     const { data } = await axios.get(
       `${baseURL()}/collection/v1_0/requesttopay/${reference}`,
       {
+        timeout: TIMEOUT,
         headers: {
           'Authorization': `Bearer ${token}`,
           'X-Target-Environment': ENV,
@@ -81,6 +85,7 @@ export async function transfer(phone, amount, reference) {
       payeeNote: 'Votre retrait',
     },
     {
+      timeout: TIMEOUT,
       headers: {
         'Authorization': `Bearer ${token}`,
         'X-Reference-Id': reference,

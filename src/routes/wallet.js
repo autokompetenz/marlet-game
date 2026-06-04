@@ -8,7 +8,7 @@ const router = Router();
 const prisma = new PrismaClient();
 const MIN_DEPOSIT = parseFloat(process.env.MIN_DEPOSIT || '100');
 const MIN_WITHDRAWAL = parseFloat(process.env.MIN_WITHDRAWAL || '500');
-const HAS_MTN = !!(process.env.MTN_CONSUMER_KEY && process.env.MTN_CONSUMER_SECRET);
+const HAS_MTN = !!(process.env.MTN_CONSUMER_KEY && process.env.MTN_CONSUMER_KEY.length > 10 && process.env.MTN_CONSUMER_SECRET && process.env.MTN_CONSUMER_SECRET.length > 5);
 
 router.get('/balance', auth, async (req, res) => {
   const user = await prisma.user.findUnique({
@@ -109,9 +109,10 @@ router.post('/withdraw', auth, async (req, res) => {
       ]);
       try {
         await mtn.transfer(user.phone, amount, reference);
+        await prisma.transaction.updateMany({ where: { reference }, data: { status: 'COMPLETED' } });
       } catch {
         await prisma.$transaction([
-          prisma.transaction.update({ where: { reference }, data: { status: 'FAILED' } }),
+          prisma.transaction.updateMany({ where: { reference }, data: { status: 'FAILED' } }),
           prisma.user.update({ where: { id: user.id }, data: { balance: { increment: amount } } }),
         ]);
         return res.status(502).json({ error: 'Échec transfert MTN' });

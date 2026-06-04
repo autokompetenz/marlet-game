@@ -6,6 +6,18 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================================
+-- FONCTION ET TRIGGER updatedAt (compatible Prisma)
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION "set_current_timestamp_updatedAt"()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW."updatedAt" = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================================
 -- TABLES
 -- ============================================================
 
@@ -64,6 +76,16 @@ CREATE INDEX idx_bet_gameId ON "Bet"("gameId");
 CREATE INDEX idx_bet_status ON "Bet"(status);
 CREATE INDEX idx_user_role ON "User"(role);
 CREATE INDEX idx_user_googleId ON "User"("googleId");
+
+-- ============================================================
+-- TRIGGERS updatedAt (pour que Prisma @updatedAt fonctionne)
+-- ============================================================
+
+CREATE TRIGGER "trig_User_updatedAt" BEFORE UPDATE ON "User"
+  FOR EACH ROW EXECUTE FUNCTION "set_current_timestamp_updatedAt"();
+
+CREATE TRIGGER "trig_Transaction_updatedAt" BEFORE UPDATE ON "Transaction"
+  FOR EACH ROW EXECUTE FUNCTION "set_current_timestamp_updatedAt"();
 
 -- ============================================================
 -- SEED: JEUX

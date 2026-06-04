@@ -32,4 +32,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erreur serveur' });
 });
 
-app.listen(PORT, () => console.log(`Serveur démarré sur http://localhost:${PORT}`));
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => console.log(`Serveur démarré sur http://localhost:${PORT}`));
+}
+
+export default app;
