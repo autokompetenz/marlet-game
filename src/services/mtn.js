@@ -1,9 +1,10 @@
 import axios from 'axios';
 
-const API_KEY = process.env.MTN_API_KEY;
-const API_USER = process.env.MTN_API_USER;
+const CONSUMER_KEY = process.env.MTN_CONSUMER_KEY;
+const CONSUMER_SECRET = process.env.MTN_CONSUMER_SECRET;
 const SUB_KEY = process.env.MTN_SUBSCRIPTION_KEY;
 const ENV = process.env.MTN_ENV || 'sandbox';
+const CALLBACK_HOST = process.env.MTN_CALLBACK_HOST || 'https://marlet-game.vercel.app';
 
 function baseURL() {
   if (ENV === 'production') return 'https://proxy.momoapi.mtn.com';
@@ -11,11 +12,13 @@ function baseURL() {
 }
 
 async function getToken() {
-  const auth = Buffer.from(`${API_USER}:${API_KEY}`).toString('base64');
+  if (!CONSUMER_KEY || !CONSUMER_SECRET) throw new Error('MTN non configuré');
+  // Consumer Key = API User (UUID), Consumer Secret = API Key
+  const auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64');
   const { data } = await axios.post(`${baseURL()}/collection/token/`, {}, {
     headers: {
       'Authorization': `Basic ${auth}`,
-      'Ocp-Apim-Subscription-Key': SUB_KEY,
+      'Ocp-Apim-Subscription-Key': SUB_KEY || CONSUMER_KEY,
     },
   });
   return data.access_token;
@@ -30,7 +33,7 @@ export async function requestPayment(phone, amount, reference) {
       currency: 'XAF',
       externalId: reference,
       payer: { partyIdType: 'MSISDN', partyId: phone },
-      payerMessage: 'Dépôt casino',
+      payerMessage: 'Dépôt Marlet Game',
       payeeNote: 'Merci pour votre dépôt',
     },
     {
@@ -38,7 +41,7 @@ export async function requestPayment(phone, amount, reference) {
         'Authorization': `Bearer ${token}`,
         'X-Reference-Id': reference,
         'X-Target-Environment': ENV,
-        'Ocp-Apim-Subscription-Key': SUB_KEY,
+        'Ocp-Apim-Subscription-Key': SUB_KEY || CONSUMER_KEY,
         'Content-Type': 'application/json',
       },
     }
@@ -55,7 +58,7 @@ export async function checkPaymentStatus(reference) {
         headers: {
           'Authorization': `Bearer ${token}`,
           'X-Target-Environment': ENV,
-          'Ocp-Apim-Subscription-Key': SUB_KEY,
+          'Ocp-Apim-Subscription-Key': SUB_KEY || CONSUMER_KEY,
         },
       }
     );
@@ -74,7 +77,7 @@ export async function transfer(phone, amount, reference) {
       currency: 'XAF',
       externalId: reference,
       payee: { partyIdType: 'MSISDN', partyId: phone },
-      payerMessage: 'Retrait casino',
+      payerMessage: 'Retrait Marlet Game',
       payeeNote: 'Votre retrait',
     },
     {
@@ -82,7 +85,7 @@ export async function transfer(phone, amount, reference) {
         'Authorization': `Bearer ${token}`,
         'X-Reference-Id': reference,
         'X-Target-Environment': ENV,
-        'Ocp-Apim-Subscription-Key': SUB_KEY,
+        'Ocp-Apim-Subscription-Key': SUB_KEY || CONSUMER_KEY,
         'Content-Type': 'application/json',
       },
     }
