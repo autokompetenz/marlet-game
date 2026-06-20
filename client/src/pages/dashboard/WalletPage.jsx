@@ -50,7 +50,8 @@ export default function Wallet() {
       await fetchBalance();
       await fetchTransactions();
     } catch (err) {
-      setMsg(err.response?.data?.error || 'Erreur');
+      const detail = err.response?.data?.detail;
+      setMsg(detail ? `${err.response?.data?.error} — ${detail}` : (err.response?.data?.error || 'Erreur'));
     }
     setLoading(false);
   };

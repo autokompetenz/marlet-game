@@ -66,7 +66,8 @@ router.post('/deposit', auth, async (req, res) => {
         const fedapayId = fedapayTxn?.transaction?.id || fedapayTxn?.id || fedapayTxn?.data?.id;
         if (!fedapayId) {
           await prisma.transaction.update({ where: { id: txn.id }, data: { status: 'FAILED' } });
-          return res.status(502).json({ error: 'Réponse FedaPay invalide : aucun ID', detail: fedapayTxn });
+          const dump = JSON.stringify(fedapayTxn).slice(0, 1000);
+          return res.status(502).json({ error: 'Réponse FedaPay invalide : aucun ID', detail: dump });
         }
 
         let fedapayToken = fedapayTxn?.token || fedapayTxn?.transaction_token || fedapayTxn?.transaction?.token;
