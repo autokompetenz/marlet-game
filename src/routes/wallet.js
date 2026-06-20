@@ -60,9 +60,20 @@ router.post('/deposit', auth, async (req, res) => {
           mode: provider === 'MTN' ? 'mtn_open' : 'moov_open',
           callbackUrl: `${process.env.APP_URL || 'https://marlet-game.vercel.app'}/api/wallet/webhook`,
         });
-        const fedapayId = fedapayTxn?.transaction?.id || fedapayTxn?.id;
-        const tokenData = await fedapay.getTransactionToken(fedapayId);
-        const fedapayToken = tokenData?.token || tokenData?.transaction_token;
+
+        console.log('FedaPay createTransaction response:', JSON.stringify(fedapayTxn));
+
+        const fedapayId = fedapayTxn?.transaction?.id || fedapayTxn?.id || fedapayTxn?.data?.id;
+        if (!fedapayId) {
+          await prisma.transaction.update({ where: { id: txn.id }, data: { status: 'FAILED' } });
+          return res.status(502).json({ error: 'Réponse FedaPay invalide : aucun ID', detail: fedapayTxn });
+        }
+
+        let fedapayToken = fedapayTxn?.token || fedapayTxn?.transaction_token || fedapayTxn?.transaction?.token;
+        if (!fedapayToken) {
+          const tokenData = await fedapay.getTransactionToken(fedapayId);
+          fedapayToken = tokenData?.token || tokenData?.transaction_token;
+        }
 
         await prisma.transaction.update({
           where: { id: txn.id },
@@ -72,7 +83,7 @@ router.post('/deposit', auth, async (req, res) => {
         res.json({ transaction: txn, fedapay_token: fedapayToken, fedapay_id: fedapayId, status: 'PENDING' });
       } catch (err) {
         await prisma.transaction.update({ where: { id: txn.id }, data: { status: 'FAILED' } });
-        return res.status(502).json({ error: 'Échec création paiement FedaPay' });
+        return res.status(502).json({ error: 'Échec création paiement FedaPay', detail: err.message });
       }
     } else {
       const txn = await prisma.$transaction(async (tx) => {
