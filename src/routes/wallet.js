@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 import { auth } from '../middleware/auth.js';
 import * as fedapay from '../services/fedapay.js';
 
@@ -9,6 +10,7 @@ const prisma = new PrismaClient();
 const MIN_DEPOSIT = parseFloat(process.env.MIN_DEPOSIT || '100');
 const MIN_WITHDRAWAL = parseFloat(process.env.MIN_WITHDRAWAL || '500');
 const HAS_FEDAPAY = !!(process.env.FEDAPAY_API_KEY && process.env.FEDAPAY_API_KEY.length > 10);
+const WEBHOOK_SECRET = process.env.FEDAPAY_WEBHOOK_SECRET || '';
 
 router.get('/balance', auth, async (req, res) => {
   const user = await prisma.user.findUnique({
@@ -170,6 +172,16 @@ router.post('/withdraw', auth, async (req, res) => {
 
 router.post('/webhook', async (req, res) => {
   try {
+    const signature = req.headers['x-fedapay-signature'];
+    if (WEBHOOK_SECRET && signature) {
+      const expected = crypto
+        .createHmac('sha256', WEBHOOK_SECRET)
+        .update(req.rawBody || JSON.stringify(req.body))
+        .digest('hex');
+      if (signature !== expected) {
+        return res.status(401).json({ error: 'Signature invalide' });
+      }
+    }
     const event = req.body;
     if (event.event === 'transaction.approved') {
       const fedapayId = event.data?.id || event.data?.transaction?.id;
