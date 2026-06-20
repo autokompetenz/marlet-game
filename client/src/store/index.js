@@ -21,11 +21,7 @@ export const useAuth = create((set) => ({
     localStorage.setItem('token', data.token);
     set({ user: data.user, token: data.token });
   },
-  googleLogin: async (credential) => {
-    const { data } = await api.post('/auth/google', { credential });
-    localStorage.setItem('token', data.token);
-    set({ user: data.user, token: data.token });
-  },
+
   logout: () => {
     localStorage.removeItem('token');
     set({ user: null, token: null });
@@ -60,12 +56,12 @@ export const useWallet = create((set) => ({
     const { data } = await api.post('/wallet/deposit', { amount });
     return data;
   },
-  confirmDeposit: async (reference) => {
-    await api.post('/wallet/deposit/confirm', { reference });
-    await set(async (s) => ({ ...s }));
+  confirmDeposit: async (fedapay_id) => {
+    const { data } = await api.post('/wallet/deposit/confirm', { fedapay_id });
+    return data;
   },
-  withdraw: async (amount) => {
-    const { data } = await api.post('/wallet/withdraw', { amount });
+  withdraw: async (amount, phone) => {
+    const { data } = await api.post('/wallet/withdraw', { amount, phone });
     return data;
   },
 }));

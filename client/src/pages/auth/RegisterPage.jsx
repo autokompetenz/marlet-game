@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../../store';
 import { useNavigate, Link } from 'react-router-dom';
-import GoogleLogin from '../../components/GoogleLogin';
 
 export default function Register() {
   const [form, setForm] = useState({ username: '', phone: '', password: '', confirm: '' });
@@ -28,23 +27,13 @@ export default function Register() {
         <h1>Inscription</h1>
         <p>Créez votre compte</p>
 
-        <GoogleLogin />
-
-        {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '12px 0' }}>
-            <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #ffffff20' }} />
-            <span style={{ color: 'var(--text2)', fontSize: '0.85rem' }}>ou</span>
-            <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #ffffff20' }} />
-          </div>
-        )}
-
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Nom d'utilisateur</label>
             <input className="form-input" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} required />
           </div>
           <div className="form-group">
-            <label>Téléphone MTN</label>
+            <label>Téléphone</label>
             <input className="form-input" placeholder="+229XXXXXXXX" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required />
           </div>
           <div className="form-group">

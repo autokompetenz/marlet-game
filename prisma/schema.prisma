@@ -12,7 +12,7 @@ model User {
   username  String   @unique
   phone     String?
   password  String?
-  googleId  String?  @unique
+
   role      String   @default("USER")
   balance   Float    @default(0)
   createdAt DateTime @default(now())

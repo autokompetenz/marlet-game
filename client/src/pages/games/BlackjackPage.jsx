@@ -25,6 +25,9 @@ export default function BlackjackPage() {
     setLoading(false);
   };
 
+  const resultClass = result?.result === 'blackjack' || result?.result === 'win' ? 'result-win' :
+    result?.result === 'push' ? '' : 'result-lose';
+
   return (
     <div>
       <h1>🃏 Blackjack</h1>
@@ -48,7 +51,7 @@ export default function BlackjackPage() {
                   return <div key={i} className={`blackjack-card ${cardColor(suit)}`}>{rank}<span>{suit}</span></div>;
                 })}
               </div>
-              <div className={`result-popup ${result.win ? 'result-win' : result.payout === 0 && result.result !== 'push' ? 'result-lose' : ''}`} style={{ display: 'inline-block', margin: '12px auto' }}>
+              <div className={`result-popup ${resultClass}`} style={{ display: 'inline-block', margin: '12px auto' }}>
                 <p className="result-amount">
                   {result.result === 'blackjack' ? '🎉 BLACKJACK !' :
                    result.result === 'win' ? '🏆 Vous avez gagné !' :
@@ -64,7 +67,7 @@ export default function BlackjackPage() {
             <input className="form-input" type="number" value={amount} onChange={e => setAmount(parseFloat(e.target.value) || 20)} min={20} />
           </div>
           <button className="btn btn-primary" onClick={handlePlay} disabled={loading}>
-            {loading ? 'Distribution...' : '🃏 Distribuer'}
+            {loading ? '🃏 Distribution...' : '🃏 Distribuer'}
           </button>
         </div>
       </div>

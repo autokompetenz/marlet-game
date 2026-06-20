@@ -33,7 +33,9 @@ export default function SlotsPage() {
         <div className="slot-machine">
           <div className="slot-reels">
             {(result?.reels || ['🍒', '🍒', '🍒']).map((s, i) => (
-              <div key={i} className={`slot-reel ${spinning ? 'spinning' : ''}`}>{spinning ? '🎰' : s}</div>
+              <div key={i} className={`slot-reel ${spinning ? 'spinning' : ''}`}>
+                {spinning ? '🎰' : s}
+              </div>
             ))}
           </div>
           {result && !spinning && (
@@ -48,7 +50,7 @@ export default function SlotsPage() {
           <input className="form-input" type="number" value={amount} onChange={e => setAmount(parseFloat(e.target.value) || 20)} min={20} />
         </div>
         <button className="btn btn-gold btn-block" onClick={handlePlay} disabled={loading}>
-          {loading ? 'Tourne...' : '🎰 Jouer'}
+          {loading ? '🎰 Tourne...' : '🎰 Jouer'}
         </button>
       </div>
     </div>

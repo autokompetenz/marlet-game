@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useWallet } from '../../store';
 
 export default function Wallet() {
-  const { balance, transactions, fetchBalance, fetchTransactions, deposit, withdraw } = useWallet();
+  const { balance, transactions, fetchBalance, fetchTransactions, deposit, confirmDeposit, withdraw } = useWallet();
   const [amount, setAmount] = useState('');
+  const [phone, setPhone] = useState('');
   const [mode, setMode] = useState('deposit');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
@@ -13,16 +14,26 @@ export default function Wallet() {
     fetchTransactions();
   }, []);
 
-  const handleSubmit = async () => {
+  const handleDeposit = async () => {
     setMsg('');
     setLoading(true);
     try {
-      if (mode === 'deposit') {
-        const res = await deposit(parseFloat(amount));
-        setMsg(`Dépôt de ${amount} FCFA effectué !`);
+      const res = await deposit(parseFloat(amount));
+      if (res.fedapay_token) {
+        const FedaPay = window['FedaPay'];
+        if (FedaPay) {
+          try {
+            await FedaPay.checkout({ token: res.fedapay_token });
+            await confirmDeposit(res.fedapay_id);
+            setMsg('Dépôt effectué avec succès !');
+          } catch {
+            setMsg('Paiement annulé ou échoué');
+          }
+        } else {
+          setMsg('FedaPay non disponible');
+        }
       } else {
-        await withdraw(parseFloat(amount));
-        setMsg('Retrait effectué !');
+        setMsg(`Dépôt de ${amount} FCFA effectué !`);
       }
       setAmount('');
       await fetchBalance();
@@ -33,6 +44,24 @@ export default function Wallet() {
     setLoading(false);
   };
 
+  const handleWithdraw = async () => {
+    setMsg('');
+    setLoading(true);
+    try {
+      await withdraw(parseFloat(amount), phone);
+      setMsg('Retrait effectué !');
+      setAmount('');
+      setPhone('');
+      await fetchBalance();
+      await fetchTransactions();
+    } catch (err) {
+      setMsg(err.response?.data?.error || 'Erreur');
+    }
+    setLoading(false);
+  };
+
+  const handleSubmit = mode === 'deposit' ? handleDeposit : handleWithdraw;
+
   return (
     <div>
       <div className="wallet-card card">
@@ -41,7 +70,7 @@ export default function Wallet() {
       </div>
 
       <div className="card" style={{ marginBottom: 24 }}>
-        <h2 style={{ marginBottom: 16 }}>{mode === 'deposit' ? 'Dépôt MTN' : 'Retrait MTN'}</h2>
+        <h2 style={{ marginBottom: 16 }}>{mode === 'deposit' ? 'Dépôt' : 'Retrait'}</h2>
         <div className="wallet-actions" style={{ marginBottom: 16 }}>
           <button className={`btn ${mode === 'deposit' ? 'btn-primary' : 'btn-secondary'} btn-sm`} onClick={() => setMode('deposit')}>Dépôt</button>
           <button className={`btn ${mode === 'withdraw' ? 'btn-primary' : 'btn-secondary'} btn-sm`} onClick={() => setMode('withdraw')}>Retrait</button>
@@ -50,10 +79,16 @@ export default function Wallet() {
           <label>Montant ({mode === 'deposit' ? 'min 100' : 'min 500'} FCFA)</label>
           <input className="form-input" type="number" value={amount} onChange={e => setAmount(e.target.value)} min={mode === 'deposit' ? 100 : 500} />
         </div>
-        <button className="btn btn-gold btn-block" onClick={handleSubmit} disabled={loading || !amount}>
-          {loading ? 'Traitement...' : mode === 'deposit' ? 'Déposer via MTN' : 'Retirer via MTN'}
+        {mode === 'withdraw' && (
+          <div className="form-group">
+            <label>Numéro Mobile Money</label>
+            <input className="form-input" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+229XXXXXXXX" />
+          </div>
+        )}
+        <button className="btn btn-gold btn-block" onClick={handleSubmit} disabled={loading || !amount || (mode === 'withdraw' && !phone)}>
+          {loading ? 'Traitement...' : mode === 'deposit' ? 'Déposer via FedaPay' : 'Retirer via FedaPay'}
         </button>
-        {msg && <p style={{ marginTop: 12, color: msg.includes('Erreur') ? 'var(--accent)' : 'var(--green)', textAlign: 'center' }}>{msg}</p>}
+        {msg && <p style={{ marginTop: 12, color: msg.includes('Erreur') || msg.includes('annulé') || msg.includes('échoué') ? 'var(--accent)' : 'var(--green)', textAlign: 'center' }}>{msg}</p>}
       </div>
 
       <h2 style={{ marginBottom: 16 }}>Transactions</h2>
