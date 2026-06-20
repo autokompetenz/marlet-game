@@ -1,10 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from '../../store';
 
+const PROVIDERS = [
+  { value: 'MTN', label: 'MTN Mobile Money', color: '#ffcc00' },
+  { value: 'MOOV', label: 'Moov Money', color: '#00a3ff' },
+];
+
 export default function Wallet() {
   const { balance, transactions, fetchBalance, fetchTransactions, deposit, confirmDeposit, withdraw } = useWallet();
   const [amount, setAmount] = useState('');
   const [phone, setPhone] = useState('');
+  const [provider, setProvider] = useState('MTN');
   const [mode, setMode] = useState('deposit');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,14 +24,18 @@ export default function Wallet() {
     setMsg('');
     setLoading(true);
     try {
-      const res = await deposit(parseFloat(amount));
+      const res = await deposit(parseFloat(amount), phone, provider);
       if (res.fedapay_token) {
         const FedaPay = window['FedaPay'];
         if (FedaPay) {
           try {
             await FedaPay.checkout({ token: res.fedapay_token });
-            await confirmDeposit(res.fedapay_id);
-            setMsg('Dépôt effectué avec succès !');
+            const confirm = await confirmDeposit(res.fedapay_id);
+            if (confirm.status === 'COMPLETED') {
+              setMsg('Dépôt effectué avec succès !');
+            } else {
+              setMsg('Paiement en cours de traitement, vérifie dans quelques instants');
+            }
           } catch {
             setMsg('Paiement annulé ou échoué');
           }
@@ -36,6 +46,7 @@ export default function Wallet() {
         setMsg(`Dépôt de ${amount} FCFA effectué !`);
       }
       setAmount('');
+      setPhone('');
       await fetchBalance();
       await fetchTransactions();
     } catch (err) {
@@ -48,7 +59,7 @@ export default function Wallet() {
     setMsg('');
     setLoading(true);
     try {
-      await withdraw(parseFloat(amount), phone);
+      await withdraw(parseFloat(amount), phone, provider);
       setMsg('Retrait effectué !');
       setAmount('');
       setPhone('');
@@ -75,17 +86,35 @@ export default function Wallet() {
           <button className={`btn ${mode === 'deposit' ? 'btn-primary' : 'btn-secondary'} btn-sm`} onClick={() => setMode('deposit')}>Dépôt</button>
           <button className={`btn ${mode === 'withdraw' ? 'btn-primary' : 'btn-secondary'} btn-sm`} onClick={() => setMode('withdraw')}>Retrait</button>
         </div>
+
         <div className="form-group">
           <label>Montant ({mode === 'deposit' ? 'min 100' : 'min 500'} FCFA)</label>
           <input className="form-input" type="number" value={amount} onChange={e => setAmount(e.target.value)} min={mode === 'deposit' ? 100 : 500} />
         </div>
-        {mode === 'withdraw' && (
-          <div className="form-group">
-            <label>Numéro Mobile Money</label>
-            <input className="form-input" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+229XXXXXXXX" />
+
+        <div className="form-group">
+          <label>Numéro Mobile Money</label>
+          <input className="form-input" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+229XXXXXXXX" />
+        </div>
+
+        <div className="form-group">
+          <label>Opérateur</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {PROVIDERS.map(p => (
+              <button
+                key={p.value}
+                type="button"
+                className={`btn ${provider === p.value ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+                onClick={() => setProvider(p.value)}
+                style={{ flex: 1 }}
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
-        )}
-        <button className="btn btn-gold btn-block" onClick={handleSubmit} disabled={loading || !amount || (mode === 'withdraw' && !phone)}>
+        </div>
+
+        <button className="btn btn-gold btn-block" onClick={handleSubmit} disabled={loading || !amount || !phone}>
           {loading ? 'Traitement...' : mode === 'deposit' ? 'Déposer via FedaPay' : 'Retirer via FedaPay'}
         </button>
         {msg && <p style={{ marginTop: 12, color: msg.includes('Erreur') || msg.includes('annulé') || msg.includes('échoué') ? 'var(--accent)' : 'var(--green)', textAlign: 'center' }}>{msg}</p>}

@@ -13,7 +13,7 @@
     "vercel-build": "npm install && npm --prefix client ci && npx prisma generate && npm run build"
   },
   "dependencies": {
-    "@prisma/client": "^6.0.0",
+    "@prisma/client": "^6.19.3",
     "axios": "^1.7.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -23,6 +23,6 @@
     "uuid": "^10.0.0"
   },
   "devDependencies": {
-    "prisma": "^6.0.0"
+    "prisma": "^6.19.3"
   }
 }

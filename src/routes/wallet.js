@@ -31,9 +31,13 @@ router.get('/transactions', auth, async (req, res) => {
 
 router.post('/deposit', auth, async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, phone, provider } = req.body;
     if (!amount || amount < MIN_DEPOSIT)
       return res.status(400).json({ error: `Minimum ${MIN_DEPOSIT} FCFA` });
+    if (!phone)
+      return res.status(400).json({ error: 'Numéro de téléphone requis' });
+    if (!provider || !['MTN', 'MOOV'].includes(provider))
+      return res.status(400).json({ error: 'Opérateur requis (MTN ou MOOV)' });
 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
     const reference = uuidv4();
@@ -51,8 +55,9 @@ router.post('/deposit', auth, async (req, res) => {
             firstname: user.username,
             lastname: user.username,
             email: `${user.username}@marletgame.com`,
-            phone: user.phone,
+            phone: phone,
           },
+          mode: provider === 'MTN' ? 'mtn_open' : 'moov_open',
           callbackUrl: `${process.env.APP_URL || 'https://marlet-game.vercel.app'}/api/wallet/webhook`,
         });
         const fedapayId = fedapayTxn?.transaction?.id || fedapayTxn?.id;
@@ -115,11 +120,13 @@ router.post('/deposit/confirm', auth, async (req, res) => {
 
 router.post('/withdraw', auth, async (req, res) => {
   try {
-    const { amount, phone } = req.body;
+    const { amount, phone, provider } = req.body;
     if (!amount || amount < MIN_WITHDRAWAL)
       return res.status(400).json({ error: `Minimum ${MIN_WITHDRAWAL} FCFA` });
     if (!phone)
       return res.status(400).json({ error: 'Numéro de téléphone requis' });
+    if (!provider || !['MTN', 'MOOV'].includes(provider))
+      return res.status(400).json({ error: 'Opérateur requis (MTN ou MOOV)' });
 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
     if (user.balance < amount)
@@ -139,6 +146,7 @@ router.post('/withdraw', auth, async (req, res) => {
         await fedapay.createTransfer({
           amount: Math.round(amount),
           phone,
+          provider: (provider || 'mtn').toLowerCase(),
           description: `Retrait Marlet Game - ${reference}`,
           customerName: user.username,
         });

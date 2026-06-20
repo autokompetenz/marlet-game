@@ -52,16 +52,16 @@ export const useWallet = create((set) => ({
       set({ transactions: data });
     } catch {}
   },
-  deposit: async (amount) => {
-    const { data } = await api.post('/wallet/deposit', { amount });
+  deposit: async (amount, phone, provider) => {
+    const { data } = await api.post('/wallet/deposit', { amount, phone, provider });
     return data;
   },
   confirmDeposit: async (fedapay_id) => {
     const { data } = await api.post('/wallet/deposit/confirm', { fedapay_id });
     return data;
   },
-  withdraw: async (amount, phone) => {
-    const { data } = await api.post('/wallet/withdraw', { amount, phone });
+  withdraw: async (amount, phone, provider) => {
+    const { data } = await api.post('/wallet/withdraw', { amount, phone, provider });
     return data;
   },
 }));

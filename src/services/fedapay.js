@@ -15,7 +15,7 @@ function headers() {
   };
 }
 
-export async function createTransaction({ amount, description, customer, callbackUrl }) {
+export async function createTransaction({ amount, description, customer, callbackUrl, mode }) {
   const body = {
     description,
     amount,
@@ -31,6 +31,7 @@ export async function createTransaction({ amount, description, customer, callbac
     },
   };
   if (callbackUrl) body.callback_url = callbackUrl;
+  if (mode) body.mode = mode;
 
   const { data } = await axios.post(`${baseURL()}/transactions`, body, {
     timeout: 10000,
@@ -56,7 +57,7 @@ export async function getTransaction(transactionId) {
   return data;
 }
 
-export async function createTransfer({ amount, phone, description, customerName }) {
+export async function createTransfer({ amount, phone, description, customerName, provider }) {
   const body = {
     amount,
     currency: { iso: 'XOF' },
@@ -64,7 +65,7 @@ export async function createTransfer({ amount, phone, description, customerName 
     receiver: {
       name: customerName || 'Utilisateur Marlet',
       phone_number: phone?.replace(/[^0-9+]/g, ''),
-      provider: 'mtn',
+      provider: provider || 'mtn',
     },
   };
 

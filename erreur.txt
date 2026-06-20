@@ -1,0 +1,1 @@
+Invalid `prisma.user.findFirst()` invocation: error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`. --> schema.prisma:7 | 6 | provider = "postgresql" 7 | url = env("DATABASE_URL") | Validation Error Count: 1
